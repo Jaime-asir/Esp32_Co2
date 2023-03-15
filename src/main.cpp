@@ -2,6 +2,7 @@
 #include <PubSubClient.h>
 #include <WiFi.h>
 #include <Adafruit_CCS811.h>
+#include <SPI.h>
 Adafruit_CCS811 miccs;
 
 
