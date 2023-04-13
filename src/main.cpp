@@ -1,4 +1,6 @@
 #include <Arduino.h>
+#include <iostream> //Biblioteca usada para pasar una variable int a String
+#include <string> //Biblioteca usada para pasar una variable int a String
 #include <PubSubClient.h> // Esta biblioteca instala las dependencias para usar el MQTT
 #include <WiFi.h> // Esta biblioteca instala las dependencias para conectar mediante el wifi
 #include <Adafruit_CCS811.h> // Esta biblioteca instala las dependencias para poder usar el sensor CCS811
@@ -14,7 +16,7 @@ const char* mqtt_user = "user1@im.jaime.asir2.test";
 const char* mqtt_password = "user1";
 // Nombre del cliente MQTT y de los temas
 const char* mqtt_client_name = "mi_esp32";
-const char* mqtt_topic = "mi/tema";
+const char* mqtt_topic = "tema";
 // Instancia de WiFiClient y PubSubClient
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -62,8 +64,12 @@ void setup() {
 }
 
 void loop() {
-
-   if(miccs.available()){
+  std::string str = std::to_string(miccs.geteCO2());
+  if (client.connected()) {
+    client.publish(mqtt_topic, str.c_str());
+    delay(500);
+  } 
+  if(miccs.available()){
     if(!miccs.readData()){ // Leer datos del CCS811
       Serial.print("CO2: ");
       Serial.print(miccs.geteCO2()); // Concentracion de dioxido de carbono
