@@ -4,21 +4,49 @@
 #include <Adafruit_CCS811.h> // Esta biblioteca instala las dependencias para poder usar el sensor CCS811
 #include <SPI.h> // El protocolo SPI se utiliza comúnmente para interconectar microcontroladores, sensores, pantallas y otros dispositivos periféricos en aplicaciones embebidas.
 Adafruit_CCS811 miccs;
-// Aqui configuraremosel entorno de ejecucion del programa antes de comenzar la funcion loop, la cual es el bucle principal del programa
-void setup() {
- Serial.begin(9600);
+
  const char* ssid = "MiFibra-D0B7" ;
  const char* password = "opGLyZVV" ;
+ // Información del servidor MQTT
+const char* mqtt_server = "192.168.1.103";
+const int mqtt_port = 1883;
+const char* mqtt_user = "user1@im.jaime.asir2.test";
+const char* mqtt_password = "user1";
+// Nombre del cliente MQTT y de los temas
+const char* mqtt_client_name = "mi_esp32";
+const char* mqtt_topic = "mi/tema";
+// Instancia de WiFiClient y PubSubClient
+WiFiClient espClient;
+PubSubClient client(espClient);
+
+
+// Aqui configuraremos el entorno de ejecucion del programa antes de comenzar la funcion loop, la cual es el bucle principal del programa
+void setup() {
+ Serial.begin(9600);
+
+
    WiFi.begin(ssid,password);
    while (WiFi.status() != WL_CONNECTED) {
-
     delay(500);
-
     Serial.println("Connecting to WiFi..");
-
    }
+    Serial.println("Connected to the WiFi network");
+ // Configuración de la conexión MQTT
+  client.setServer(mqtt_server, mqtt_port);
 
-  Serial.println("Connected to the WiFi network");
+
+    while (!client.connected()) {
+    Serial.println("Conectando a MQTT...");
+    if (client.connect(mqtt_client_name, mqtt_user, mqtt_password)) {
+      Serial.println("Conexión exitosa.");
+    } else {
+      Serial.print("Error de conexión: ");
+      Serial.println(client.state());
+      delay(2000);
+    }
+  }
+
+
 
 
 
