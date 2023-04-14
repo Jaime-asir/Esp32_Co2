@@ -93,6 +93,7 @@ void loop() {
     client.publish(mqtt_topic, str.c_str());
     delay(500);
   } 
+  // Esta parte de aqui no tiene ningun efecto sobre el MQTT, son simples comprobaciones para saber si funciona correctamente el sensor el ESP32 y el codifgo
   if(miccs.available()){
     if(!miccs.readData()){ // Leer datos del CCS811
       Serial.print(" CO2: ");
