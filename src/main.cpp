@@ -1,4 +1,6 @@
 #include <Arduino.h>
+#include <NTPClient.h>
+#include <WiFiUdp.h>
 #include <iostream> //Biblioteca usada para pasar una variable int a String
 #include <string> //Biblioteca usada para pasar una variable int a String
 #include <PubSubClient.h> // Esta biblioteca instala las dependencias para usar el MQTT
@@ -17,11 +19,14 @@ const char* mqtt_password = "user1";
 // Nombre del cliente MQTT y de los temas
 const char* mqtt_client_name = "mi_esp32";
 const char* mqtt_topic = "tema";
+const char* mqtt_topic2 = "timestamp";
+const char* mqtt_topic3 = "horario";
 // Instancia de WiFiClient y PubSubClient
 WiFiClient espClient;
 PubSubClient client(espClient);
-
-
+// Configuración del cliente NTP
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "pool.ntp.org");
 // Aqui configuraremos el entorno de ejecucion del programa antes de comenzar la funcion loop, la cual es el bucle principal del programa
 void setup() {
  Serial.begin(9600);
@@ -64,6 +69,25 @@ void setup() {
 }
 
 void loop() {
+// Actualiza la hora del cliente NTP
+  timeClient.update();
+  // Obtiene la hora actual
+  String hora = timeClient.getFormattedTime();
+  // Crea un mensaje con la hora
+  char horaver[20];
+  hora.toCharArray(horaver, 20);
+  // Publica el mensaje en el tema "hora"
+  client.publish(mqtt_topic3, horaver);
+
+
+// Obtén el timestamp actual en segundos
+  unsigned long timestamp = millis() / 1000;
+  // Crea un mensaje con el timestamp
+  char timest[20];
+  snprintf(timest, 20, "%lu", timestamp);
+  // Publica el mensaje en el tema "timestamp"
+  client.publish(mqtt_topic2, timest);
+
   std::string str = std::to_string(miccs.geteCO2());
   if (client.connected()) {
     client.publish(mqtt_topic, str.c_str());
@@ -71,10 +95,14 @@ void loop() {
   } 
   if(miccs.available()){
     if(!miccs.readData()){ // Leer datos del CCS811
-      Serial.print("CO2: ");
+      Serial.print(" CO2: ");
       Serial.print(miccs.geteCO2()); // Concentracion de dioxido de carbono
-      Serial.print("ppm, TVOC: ");
-      Serial.println(miccs.getTVOC()); // Compuestos Organicos Volatiles Totales
+      Serial.print(" ppm, TVOC: ");
+      Serial.println(miccs.getTVOC()); // Compuestos Organicos Volatiles 
+      Serial.print(" Momento de transimison ");
+      Serial.print(timest);
+      Serial.print(" Hora de transimison ");
+      Serial.print(horaver);
     }
     else{
       Serial.println("ERROR!");
