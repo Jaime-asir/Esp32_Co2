@@ -8,20 +8,22 @@
 #include <Adafruit_CCS811.h> // Esta biblioteca instala las dependencias para poder usar el sensor CCS811
 #include <SPI.h> // El protocolo SPI se utiliza comúnmente para interconectar microcontroladores, sensores, pantallas y otros dispositivos periféricos en aplicaciones embebidas.
 #include <ArduinoJson.h>
+#include <Time.h>
 Adafruit_CCS811 miccs;
-
+// IMPORTANTE Aqui nos conectamos al punto de acceso
  const char* ssid = "MiFibra-D0B7" ;
  const char* password = "opGLyZVV" ;
- // Información del servidor MQTT
+// IMPORTANTE Información del servidor MQTT
 const char* mqtt_server = "192.168.1.103";
 const int mqtt_port = 1883;
 const char* mqtt_user = "user1@im.jaime.asir2.test";
 const char* mqtt_password = "user1";
-// Nombre del cliente MQTT y de los temas
+// IMPORTANTE Nombre del cliente MQTT Y LOS TOPICS
 const char* mqtt_client_name = "mi_esp32";
 const char* mqtt_topic = "tema";
 const char* mqtt_topic2 = "timestamp";
 const char* mqtt_topic3 = "horario";
+const char* jsonString = "jsonString";
 // Instancia de WiFiClient y PubSubClient
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -31,18 +33,16 @@ NTPClient timeClient(ntpUDP, "pool.ntp.org");
 // Aqui configuraremos el entorno de ejecucion del programa antes de comenzar la funcion loop, la cual es el bucle principal del programa
 void setup() {
  Serial.begin(9600);
-
-
    WiFi.begin(ssid,password);
    while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.println("Connecting to WiFi..");
    }
     Serial.println("Connected to the WiFi network");
- // Configuración de la conexión MQTT
-  client.setServer(mqtt_server, mqtt_port);
+// Configuración de la conexión MQTT
+    client.setServer(mqtt_server, mqtt_port);
 
-
+// IMPORTANTE Conexion al WiFi
     while (!client.connected()) {
     Serial.println("Conectando a MQTT...");
     if (client.connect(mqtt_client_name, mqtt_user, mqtt_password)) {
@@ -51,12 +51,8 @@ void setup() {
       Serial.print("Error de conexión: ");
       Serial.println(client.state());
       delay(2000);
+           }
     }
-  }
-
-
-
-
 
   Serial.println("miccs811 test");
 
@@ -77,8 +73,6 @@ void loop() {
   // Crea un mensaje con la hora
   char horaver[20];
   hora.toCharArray(horaver, 20);
-  // Publica el mensaje en el tema "hora"
-  client.publish(mqtt_topic3, horaver);
 
 
 // Obtén el timestamp actual en segundos
@@ -86,28 +80,23 @@ void loop() {
   // Crea un mensaje con el timestamp
   char timest[20];
   snprintf(timest, 20, "%lu", timestamp);
-  // Publica el mensaje en el tema "timestamp"
-  client.publish(mqtt_topic2, timest);
 
   std::string str = std::to_string(miccs.geteCO2());
-  if (client.connected()) {
-    client.publish(mqtt_topic, str.c_str());
-    delay(500);
-  } 
 
-    // Crear un objeto JSON con los datos
+// Crear un objeto JSON con los datos
   StaticJsonDocument<200> jsonDocument;
-  jsonDocument["Hora"] = horaver;
-  jsonDocument["Dia"] = timest;
+  jsonDocument["Hora UTF+2"] = horaver;// UTF+2 Quiere decir que el programa saca la hora 2 horas distantes de la hora actual española, porlo cual se han de sumar dos horas al resultado
+  jsonDocument["VDP"] = timest; //VDP Son las siglas de Vida Del Programa, que hace referencia a cuantos segundos se lleva ejecutando
   jsonDocument["Co2"] = miccs.geteCO2();
+  jsonDocument["Dia"] = miccs.geteCO2();
   
-  // Convertir el objeto JSON a una cadena de caracteres
+// Convertir el objeto JSON a una cadena de caracteres
   char jsonString[200];
   serializeJson(jsonDocument, jsonString);
   
-  // Publicar el mensaje en el topic "sensores"
+// Publicar el mensaje en el topic "sensores"
   client.publish("sensores", jsonString);
-  // Esta parte de aqui no tiene ningun efecto sobre el MQTT, son simples comprobaciones para saber si funciona correctamente el sensor el ESP32 y el codifgo
+// Esta parte de aqui no tiene ningun efecto sobre el MQTT, son simples comprobaciones para saber si funciona correctamente el sensor el ESP32 y el codifgo
   if(miccs.available()){
     if(!miccs.readData()){ // Leer datos del CCS811
       Serial.print(" CO2: ");
@@ -124,5 +113,5 @@ void loop() {
       while(1);
     }
   }
-  delay(500);
+  delay(1000);
 }
