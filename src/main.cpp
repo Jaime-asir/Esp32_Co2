@@ -7,6 +7,7 @@
 #include <WiFi.h> // Esta biblioteca instala las dependencias para conectar mediante el wifi
 #include <Adafruit_CCS811.h> // Esta biblioteca instala las dependencias para poder usar el sensor CCS811
 #include <SPI.h> // El protocolo SPI se utiliza comúnmente para interconectar microcontroladores, sensores, pantallas y otros dispositivos periféricos en aplicaciones embebidas.
+#include <ArduinoJson.h>
 Adafruit_CCS811 miccs;
 
  const char* ssid = "MiFibra-D0B7" ;
@@ -69,7 +70,7 @@ void setup() {
 }
 
 void loop() {
-// Actualiza la hora del cliente NTP
+  // Actualiza la hora del cliente NTP
   timeClient.update();
   // Obtiene la hora actual
   String hora = timeClient.getFormattedTime();
@@ -93,6 +94,19 @@ void loop() {
     client.publish(mqtt_topic, str.c_str());
     delay(500);
   } 
+
+    // Crear un objeto JSON con los datos
+  StaticJsonDocument<200> jsonDocument;
+  jsonDocument["Hora"] = horaver;
+  jsonDocument["Dia"] = timest;
+  jsonDocument["Co2"] = miccs.geteCO2();
+  
+  // Convertir el objeto JSON a una cadena de caracteres
+  char jsonString[200];
+  serializeJson(jsonDocument, jsonString);
+  
+  // Publicar el mensaje en el topic "sensores"
+  client.publish("sensores", jsonString);
   // Esta parte de aqui no tiene ningun efecto sobre el MQTT, son simples comprobaciones para saber si funciona correctamente el sensor el ESP32 y el codifgo
   if(miccs.available()){
     if(!miccs.readData()){ // Leer datos del CCS811
