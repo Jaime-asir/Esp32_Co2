@@ -8,7 +8,7 @@
 #include <Adafruit_CCS811.h> // Esta biblioteca instala las dependencias para poder usar el sensor CCS811
 #include <SPI.h> // El protocolo SPI se utiliza comúnmente para interconectar microcontroladores, sensores, pantallas y otros dispositivos periféricos en aplicaciones embebidas.
 #include <ArduinoJson.h>
-#include <Time.h>
+#include <TimeLib.h>
 Adafruit_CCS811 miccs;
 // IMPORTANTE Aqui nos conectamos al punto de acceso
  const char* ssid = "MiFibra-D0B7" ;
@@ -63,32 +63,29 @@ void setup() {
 
   // Espera a que el sensor este disponible
   while(!miccs.available());
+
+    // establecer la fecha y hora local
+  //setTime(17, 18, 0, 18, 4, 2023); //hora, minutos, segundos, dia, mes, año
+  // ajustar la zona horaria
 }
 
 void loop() {
-  // Actualiza la hora del cliente NTP
+// Actualiza la hora del cliente NTP
   timeClient.update();
-  // Obtiene la hora actual
-  String hora = timeClient.getFormattedTime();
-  // Crea un mensaje con la hora
-  char horaver[20];
-  hora.toCharArray(horaver, 20);
-
-
 // Obtén el timestamp actual en segundos
   unsigned long timestamp = millis() / 1000;
-  // Crea un mensaje con el timestamp
+// Crea un mensaje con el timestamp
   char timest[20];
   snprintf(timest, 20, "%lu", timestamp);
-
+// Pasar a un formato adaptable para json y mqtt
   std::string str = std::to_string(miccs.geteCO2());
-
+// Obtener la fecha y hora actual
+  time_t t = now();
 // Crear un objeto JSON con los datos
   StaticJsonDocument<200> jsonDocument;
-  jsonDocument["Hora UTF+2"] = horaver;// UTF+2 Quiere decir que el programa saca la hora 2 horas distantes de la hora actual española, porlo cual se han de sumar dos horas al resultado
   jsonDocument["VDP"] = timest; //VDP Son las siglas de Vida Del Programa, que hace referencia a cuantos segundos se lleva ejecutando
   jsonDocument["Co2"] = miccs.geteCO2();
-  jsonDocument["Dia"] = miccs.geteCO2();
+  jsonDocument["Dia y hora"] = ctime(&t);
   
 // Convertir el objeto JSON a una cadena de caracteres
   char jsonString[200];
@@ -106,7 +103,7 @@ void loop() {
       Serial.print(" Momento de transimison ");
       Serial.print(timest);
       Serial.print(" Hora de transimison ");
-      Serial.print(horaver);
+      Serial.print(ctime(&t));
     }
     else{
       Serial.println("ERROR!");
