@@ -1,6 +1,6 @@
 #include <Arduino.h>
-#include <NTPClient.h>
-#include <WiFiUdp.h>
+#include <NTPClient.h>//Sincronizar la hora a través del Protocolo de Tiempo de Red (NTP, por sus siglas en inglés)
+#include <WiFiUdp.h>//La biblioteca WiFiUdp es una biblioteca estándar del ESP32
 #include <iostream> //Biblioteca usada para pasar una variable int a String
 #include <string> //Biblioteca usada para pasar una variable int a String
 #include <PubSubClient.h> // Esta biblioteca instala las dependencias para usar el MQTT
@@ -11,8 +11,8 @@
 #include <TimeLib.h>
 Adafruit_CCS811 miccs;
 // IMPORTANTE Aqui nos conectamos al punto de acceso
- const char* ssid = "MiFibra-D0B7" ;
- const char* password = "opGLyZVV" ;
+ const char* ssid = "tu_ssid" ;
+ const char* password = "tu_contraseña" ;
 // IMPORTANTE Información del servidor MQTT
 const char* mqtt_server = "192.168.1.103";
 const int mqtt_port = 1883;
